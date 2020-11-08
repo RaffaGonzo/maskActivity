@@ -32,7 +32,7 @@ def change_pos(avoidance=True):
             ind['pos'][1] = -1
         nearby_inds = filter(lambda x: dist(x, ind) <= check_radius and x != ind, pop)
         if len(list(nearby_inds)) and avoidance:
-            risk_aversion = 1.8  # must be between 1 and 2.1
+            risk_aversion = 3  # must be between 1 and 2.1
             total_mom_x = 0
             total_mom_y = 0
             for ind0 in nearby_inds:
