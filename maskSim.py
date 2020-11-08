@@ -28,23 +28,25 @@ def change_pos():
 # Change color test
 def change_clr(idx):
     trigger_radius = 0.06
-    incubation_time = 100
+    incubation_time = 10
     falloff_rate = (incubation_time-1)/incubation_time
     euclidean_dist = lambda x, y: sqrt((x**2) + (y**2))
     point = lambda x1, x2: abs(x1 - x2)  # difference between x vector components
     for ind1 in pop:
+        NO_INT_FLAG = True  # interaction flag
         for ind2 in pop:
-            if euclidean_dist(point(ind1['pos'][0], ind2['pos'][0]),
-                              point(ind1['pos'][1], ind2['pos'][1])) <= trigger_radius:
-                ind1['clr'] += (1-ind1['clr']) * ind2['clr']
-                pop[0]['clr'] = 1  # eternal source
-                ind2['clr'] += (1-ind2['clr']) * ind1['clr']
-                pop[0]['clr'] = 1  # eternal source
-            else:
-                ind1['clr'] *= falloff_rate
-                pop[0]['clr'] = 1  # eternal source
-                ind2['clr'] *= falloff_rate
-                pop[0]['clr'] = 1  # eternal source
+                if ind1 != ind2:
+                    if euclidean_dist(point(ind1['pos'][0], ind2['pos'][0]),
+                                      point(ind1['pos'][1], ind2['pos'][1])) <= trigger_radius:
+                        ind1['clr'] += (1 - ind1['clr']) * ind2['clr']
+                        pop[0]['clr'] = 1  # eternal source
+                        ind2['clr'] += (1 - ind2['clr']) * ind1['clr']
+                        pop[0]['clr'] = 1  # eternal source
+                        NO_INT_FLAG = False
+
+        if NO_INT_FLAG:
+            ind1['clr'] *= falloff_rate
+            pop[0]['clr'] = 1  # eternal source
 
     scat.set_array(pop['clr'])
 
