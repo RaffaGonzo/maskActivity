@@ -1,5 +1,5 @@
 import random as r
-from math import sqrt
+from math import sqrt, e
 import statistics as s
 import numpy as np
 import matplotlib.pyplot as plt
@@ -26,26 +26,32 @@ def change_pos():
     scat.set_offsets(pop['pos'])
 
 # Change color test
-def change_clr():
+def change_clr(idx):
     trigger_radius = 0.06
-    risk_num = 0.99
+    incubation_time = 100
+    falloff_rate = (incubation_time-1)/incubation_time
     euclidean_dist = lambda x, y: sqrt((x**2) + (y**2))
-    point = lambda x1, x2: abs(x1 - x2)
+    point = lambda x1, x2: abs(x1 - x2)  # difference between x vector components
     for ind1 in pop:
         for ind2 in pop:
             if euclidean_dist(point(ind1['pos'][0], ind2['pos'][0]),
                               point(ind1['pos'][1], ind2['pos'][1])) <= trigger_radius:
-                newColor = (ind1['clr'] + ind2['clr'])/2
-                ind1['clr'] = newColor
-                pop[0]['clr'] = 1 # eternal source
-                ind2['clr'] = newColor
-                pop[0]['clr'] = 1 # eternal source
+                ind1['clr'] += (1-ind1['clr']) * ind2['clr']
+                pop[0]['clr'] = 1  # eternal source
+                ind2['clr'] += (1-ind2['clr']) * ind1['clr']
+                pop[0]['clr'] = 1  # eternal source
+            else:
+                ind1['clr'] *= falloff_rate
+                pop[0]['clr'] = 1  # eternal source
+                ind2['clr'] *= falloff_rate
+                pop[0]['clr'] = 1  # eternal source
+
     scat.set_array(pop['clr'])
 
 # Function to run between each frame
 def _update_plot(i, fig, scatter):
     change_pos()
-    change_clr()
+    change_clr(i)
     return scat
 
 # Set up population
@@ -74,6 +80,6 @@ anim = animation.FuncAnimation(fig,
                                _update_plot,
                                fargs=(fig, scat),
                                frames=100,
-                               interval=50)
+                               interval=20)
 
 plt.show()
