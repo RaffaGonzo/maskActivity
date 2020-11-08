@@ -10,10 +10,11 @@ import matplotlib.cm as cm
 # Drifts momentum randomly, updates position based on momentum and more drift
 def change_pos():
     drift = 0.02
-    check_radius = 0.7
-    euclidean_dist = lambda x, y: sqrt((x ** 2) + (y ** 2))
+    check_radius = 0.1
+    pythagorean = lambda x, y: sqrt((x ** 2) + (y ** 2))
     point = lambda x1, x2: abs(x1 - x2)  # difference between x vector components
-    dist = lambda x1, x2: euclidean_dist(point(x1['pos'][0], x2['pos'][0]), point(x1['pos'][1], x2['pos'][1]))
+    dist = lambda x1, x2: pythagorean(point(x1['pos'][0], x2['pos'][0]), point(x1['pos'][1], x2['pos'][1]))
+    avoid_threshold = 0.5
     for ind in pop:
         ind['mom'][0] += r.uniform(-drift, drift)
         ind['mom'][1] += r.uniform(-drift, drift)
@@ -34,14 +35,17 @@ def change_pos():
             total_mom_x = 0
             total_mom_y = 0
             for ind0 in nearby_inds:
-                total_mom_x += ind0['mom'][0]
-                total_mom_y += ind0['mom'][1]
-            ind['mom'][0] = total_mom_x
-            ind['mom'][1] = total_mom_y
-
-        else:
-            ind['pos'][0] += drift * ind['mom'][0] + r.uniform(-drift, drift)
-            ind['pos'][1] += drift * ind['mom'][1] + r.uniform(-drift, drift)
+                if ind0['clr'] >= avoid_threshold:
+                    total_mom_x += ind0['mom'][0]
+                    total_mom_y += ind0['mom'][1]
+            try:
+                if total_mom_y or total_mom_x:
+                    ind['mom'][0] = total_mom_x**2 / pythagorean(total_mom_x, total_mom_y)
+                    ind['mom'][1] = total_mom_y**2 / pythagorean(total_mom_x, total_mom_y)
+            except ZeroDivisionError:
+                pass
+        ind['pos'][0] += drift * ind['mom'][0] + r.uniform(-drift, drift)
+        ind['pos'][1] += drift * ind['mom'][1] + r.uniform(-drift, drift)
     scat.set_offsets(pop['pos'])
 
 # Change color test
@@ -110,6 +114,6 @@ anim = animation.FuncAnimation(fig,
                                _update_plot,
                                fargs=(fig, scat),
                                frames=100,
-                               interval=100)
+                               interval=20)
 
 plt.show()
