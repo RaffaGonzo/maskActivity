@@ -9,18 +9,22 @@ import matplotlib.cm as cm
 
 # Drifts momentum randomly, updates position based on momentum and more drift
 def change_pos():
-    drift = 0.01
+    drift = 0.02
     for ind in pop:
         ind['mom'][0] += r.uniform(-drift, drift)
         ind['mom'][1] += r.uniform(-drift, drift)
         if ind['pos'][0] > 1:
             ind['mom'][0] = -abs(ind['mom'][0])
+            ind['pos'][0] = 1
         if ind['pos'][0] < -1:
             ind['mom'][0] = abs(ind['mom'][0])
+            ind['pos'][0] = -1
         if ind['pos'][1] > 1:
             ind['mom'][1] = -abs(ind['mom'][1])
+            ind['pos'][1] = 1
         if ind['pos'][1] < -1:
             ind['mom'][1] = abs(ind['mom'][1])
+            ind['pos'][1] = -1
         ind['pos'][0] += drift * ind['mom'][0] + r.uniform(-drift, drift)
         ind['pos'][1] += drift * ind['mom'][1] + r.uniform(-drift, drift)
     scat.set_offsets(pop['pos'])
@@ -28,7 +32,7 @@ def change_pos():
 # Change color test
 def change_clr(idx):
     trigger_radius = 0.06
-    incubation_time = 10
+    incubation_time = 5
     falloff_rate = (incubation_time-1)/incubation_time
     euclidean_dist = lambda x, y: sqrt((x**2) + (y**2))
     point = lambda x1, x2: abs(x1 - x2)  # difference between x vector components
@@ -39,14 +43,11 @@ def change_clr(idx):
                     if euclidean_dist(point(ind1['pos'][0], ind2['pos'][0]),
                                       point(ind1['pos'][1], ind2['pos'][1])) <= trigger_radius:
                         ind1['clr'] += (1 - ind1['clr']) * ind2['clr']
-                        pop[0]['clr'] = 1  # eternal source
                         ind2['clr'] += (1 - ind2['clr']) * ind1['clr']
-                        pop[0]['clr'] = 1  # eternal source
                         NO_INT_FLAG = False
 
         if NO_INT_FLAG:
             ind1['clr'] *= falloff_rate
-            pop[0]['clr'] = 1  # eternal source
 
     scat.set_array(pop['clr'])
 
@@ -61,12 +62,10 @@ popsize = 50
 pop = np.zeros(popsize, dtype=[('pos', float, 2), ('mom', float, 2), ('clr', float, 1)])
 pop['pos'] = np.random.uniform(-1, 1, (popsize, 2))
 pop['mom'] = np.random.uniform(-1, 1, (popsize, 2))
+pop['clr'] = np.random.uniform(0.03, 0.05, popsize)
 
-# Patient zero
-pop[0]['clr'] = 1
-
-# Set up figure
-fig = plt.figure()
+# Set up figures
+fig = plt.figure(1)
 ax = fig.add_subplot(111)
 ax.set_xlim([-1, 1])
 ax.set_ylim([-1, 1])
@@ -82,6 +81,6 @@ anim = animation.FuncAnimation(fig,
                                _update_plot,
                                fargs=(fig, scat),
                                frames=100,
-                               interval=20)
+                               interval=100)
 
 plt.show()
