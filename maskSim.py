@@ -8,7 +8,7 @@ from matplotlib import colors as clr
 import matplotlib.cm as cm
 
 # Drifts momentum randomly, updates position based on momentum and more drift
-def change_pos():
+def change_pos(avoidance=True):
     drift = 0.02
     check_radius = 0.1
     pythagorean = lambda x, y: sqrt((x ** 2) + (y ** 2))
@@ -31,7 +31,8 @@ def change_pos():
             ind['mom'][1] = abs(ind['mom'][1])
             ind['pos'][1] = -1
         nearby_inds = filter(lambda x: dist(x, ind) <= check_radius and x != ind, pop)
-        if len(list(nearby_inds)):
+        if len(list(nearby_inds)) and avoidance:
+            risk_aversion = 1.8  # must be between 1 and 2.1
             total_mom_x = 0
             total_mom_y = 0
             for ind0 in nearby_inds:
@@ -40,17 +41,20 @@ def change_pos():
                     total_mom_y += ind0['mom'][1]
             try:
                 if total_mom_y or total_mom_x:
-                    ind['mom'][0] = total_mom_x**2 / pythagorean(total_mom_x, total_mom_y)
-                    ind['mom'][1] = total_mom_y**2 / pythagorean(total_mom_x, total_mom_y)
+                    ind['mom'][0] = total_mom_x / pythagorean(total_mom_x, total_mom_y)
+                    ind['mom'][1] = total_mom_y / pythagorean(total_mom_x, total_mom_y)
             except ZeroDivisionError:
                 pass
-        ind['pos'][0] += drift * ind['mom'][0] + r.uniform(-drift, drift)
-        ind['pos'][1] += drift * ind['mom'][1] + r.uniform(-drift, drift)
+            ind['pos'][0] += risk_aversion * drift * ind['mom'][0]
+            ind['pos'][1] += risk_aversion * drift * ind['mom'][1]
+        else:
+            ind['pos'][0] += drift * ind['mom'][0] + r.uniform(-drift, drift)
+            ind['pos'][1] += drift * ind['mom'][1] + r.uniform(-drift, drift)
     scat.set_offsets(pop['pos'])
 
 # Change color test
 def change_clr(idx):
-    trigger_radius = 0.06
+    trigger_radius = 0.05
     incubation_time = 5
     falloff_rate = (incubation_time-1)/incubation_time
     euclidean_dist = lambda x, y: sqrt((x**2) + (y**2))
@@ -79,7 +83,7 @@ def change_hist():
 
 # Function to run between each frame
 def _update_plot(i, fig, scatter):
-    change_pos()
+    change_pos(avoidance=False)
     change_clr(i)
     change_hist()
     return
@@ -114,6 +118,6 @@ anim = animation.FuncAnimation(fig,
                                _update_plot,
                                fargs=(fig, scat),
                                frames=100,
-                               interval=20)
+                               interval=40)
 
 plt.show()
